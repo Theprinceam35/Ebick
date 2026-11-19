@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>عدّاد البسكليت</title>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9ede4;--ink:#16211c;--mute:#5d6b63;--line:#c3ccbe;--card:#f6f8f2;--ok:#0b6e4f;--warn:#b45309;--low:#b91c1c;--off:#d3dacd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1512;--ink:#e8efe9;--mute:#93a39a;--line:#26322b;--card:#17201b;--ok:#5bd6a0;--warn:#f0a35a;--low:#ff7a7a;--off:#26322b}}
+:root[data-theme="dark"]{--bg:#0f1512;--ink:#e8efe9;--mute:#93a39a;--line:#26322b;--card:#17201b;--ok:#5bd6a0;--warn:#f0a35a;--low:#ff7a7a;--off:#26322b}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,"Segoe UI",Tahoma,sans-serif}
+main{max-width:480px;margin:0 auto;padding:16px}
+.speed{text-align:center;padding:14px 0 4px}
+.speed b{display:block;font-size:min(34vw,168px);line-height:1;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.speed span{color:var(--mute);font-size:18px}
+.msg{font-size:13px;color:var(--mute);text-align:center;min-height:20px;margin:2px 0}
+.bat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pct{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums}
+.volt{color:var(--mute);font-size:15px;font-variant-numeric:tabular-nums;text-align:left}
+.cells{display:flex;gap:3px;margin-top:10px;direction:ltr}
+.cells i{flex:1;height:26px;border-radius:3px;background:var(--off)}
+.cells i.on{background:var(--c,var(--ok))}
+.sub{margin-top:8px;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border-top:2px solid var(--ink);padding-top:8px}
+.stat small{display:block;color:var(--mute);font-size:13px}
+.stat b{font-size:34px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat u{text-decoration:none;color:var(--mute);font-size:14px;margin-inline-start:4px}
+.btns{display:flex;gap:10px;margin:14px 0 0}
+button{flex:1;font:inherit;font-size:16px;padding:13px 6px;border-radius:12px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+button.alt{background:transparent;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
+details{border-top:1px solid var(--line);padding-top:10px;margin-top:16px}
+summary{cursor:pointer;color:var(--mute)}
+label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mute)}
+input{width:100%;font:inherit;font-size:17px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.note{font-size:13px;color:var(--mute);margin-top:10px;line-height:1.8}
+#map{width:100%;height:230px;display:block;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+  <div class="speed"><b id="spd">0</b><span>كم/س</span></div>
+  <div class="msg" id="gps">الـGPS متوقف</div>
+
+  <section class="bat" aria-label="حالة البطارية">
+    <div class="row"><span class="pct" id="pct">--%</span><span class="volt"><span id="volt">-- فولت</span><br><span id="amp">-- أمبير</span></span></div>
+    <div class="cells" id="cells"></div>
+    <div class="sub" id="sub">غير متصل بالـBMS</div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><small>المتبقي تقريباً</small><b id="rem">--</b><u>كم</u></div>
+    <div class="stat"><small>المسافة المقطوعة</small><b id="dist">0.00</b><u>كم</u></div>
+    <div class="stat"><small>الاستهلاك</small><b id="whkm">--</b><u>واط/كم</u></div>
+    <div class="stat"><small>الاستطاعة الآن</small><b id="pw">--</b><u>واط</u></div>
+  </section>
+
+  <div class="btns">
+    <button id="bt">اتصال بالـBMS</button>
+    <button id="go">ابدأ الرحلة</button>
+    <button class="alt" id="reset">تصفير</button>
+  </div>
+  <div class="msg" id="btmsg"></div>
+  <canvas id="map" aria-label="مسار الرحلة"></canvas>
+
+  <details>
+    <summary>إعدادات</summary>
+    <label for="est">استهلاك تقديري قبل أول كيلومتر (واط/كم)</label>
+    <input id="est" type="number" inputmode="decimal" value="18">
+    <p class="note">أغلق تطبيق JK BMS قبل الاتصال، فالـBMS يقبل اتصالاً واحداً فقط. إذا ظهرت قراءات غير منطقية أخبرني باسم موديل الـBMS لأعدّل القراءة.</p>
+    <pre id="dump" style="direction:ltr;white-space:pre-wrap;word-break:break-all;font-size:11px;color:var(--mute);user-select:all"></pre>
+    <button class="alt" id="demo" style="margin-top:6px;width:100%">تشغيل وضع التجربة</button>
+  </details>
+</main>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var SVC=0xffe0, CHR=0xffe1;
+  var bms=null, ch=null, buf=[], lastRx=0, startAh=null, watchdog=null, path=[];
+  var st={dist:0,secs:0,speed:0,last:null,watch:null,demo:null};
+  try{var s=localStorage.getItem("est");if(s)$("est").value=s;}catch(e){}
+  $("est").oninput=function(){try{localStorage.setItem("est",$("est").value)}catch(e){}render();};
+
+  var cellsEl=$("cells");
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+
+  /* ---------- JK BMS over Bluetooth ---------- */
+  function cmd(c){var f=new Uint8Array(20);f[0]=0xAA;f[1]=0x55;f[2]=0x90;f[3]=0xEB;f[4]=c;var s=0;for(var i=0;i<19;i++)s+=f[i];f[19]=s&255;return f;}
+  async function send(c){var f=cmd(c);try{await ch.writeValueWithoutResponse(f)}catch(e){await ch.writeValue(f)}}
+
+  async function connectBms(){
+    if(!navigator.bluetooth){$("btmsg").textContent="هذا المتصفح لا يدعم البلوتوث. افتح الرابط في Chrome على أندرويد.";return;}
+    try{
+      var d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[SVC]});
+      d.addEventListener("gattserverdisconnected",function(){clearInterval(watchdog);$("bt").textContent="اتصال بالـBMS";$("btmsg").textContent="انقطع الاتصال بالـBMS";});
+      $("btmsg").textContent="جارٍ الاتصال…";
+      var srv=await d.gatt.connect(), sv=await srv.getPrimaryService(SVC);
+      ch=await sv.getCharacteristic(CHR);
+      await ch.startNotifications();
+      ch.addEventListener("characteristicvaluechanged",onRx);
+      await send(0x97); await sleep(400); await send(0x96);
+      lastRx=Date.now();
+      watchdog=setInterval(function(){if(Date.now()-lastRx>4000){lastRx=Date.now();send(0x96).catch(function(){});}},1000);
+      $("bt").textContent="متصل ✓"; $("btmsg").textContent="بانتظار أول قراءة…";
+    }catch(e){$("btmsg").textContent=(e&&e.name==="NotFoundError")?"لم يتم اختيار جهاز":(/permissions policy/i.test((e&&e.message)||"")?"البلوتوث غير مسموح داخل الصفحة المستضافة. افتح النسخة المحمّلة من الملف":"تعذّر الاتصال: "+(e&&e.message||e));}
+  }
+  function onRx(e){
+    var v=e.target.value, d=new Uint8Array(v.buffer,v.byteOffset,v.byteLength);
+    lastRx=Date.now();
+    if(d.length>=4&&d[0]===0x55&&d[1]===0xAA&&d[2]===0xEB&&d[3]===0x90)buf=[];
+    for(var i=0;i<d.length;i++)buf.push(d[i]);
+    if(buf.length>=300){ if(buf[4]===2)parse(buf.slice(0,300)); buf=[]; }
+  }
+  function parse(b){
+    function dump(m){$("btmsg").textContent=m;var h=[];for(var j=0;j<b.length;j++)h.push(("0"+b[j].toString(16)).slice(-2));$("dump").textContent=h.join(" ");document.querySelector("details").open=true;}
+    var dv=new DataView(new Uint8Array(b).buffer), n=0, sum=0, mn=9, mx=0, p=-1;
+    for(var i=0;i<32;i++){var c=dv.getUint16(6+2*i,true)/1000; if(c<1.5||c>5)break; n++;sum+=c;mn=Math.min(mn,c);mx=Math.max(mx,c);}
+    for(var q=100;q<b.length-36&&p<0;q++){var t=dv.getUint32(q,true)/1000; if(n&&Math.abs(t-sum)<sum*0.03)p=q;}
+    if(p<0){dump("تعذّر فهم إطار البيانات. انسخ الأرقام في الإعدادات وأرسلها لي");return;}
+    var soc=b[p+23];
+    if(soc>100){dump("قراءة النسبة غير منطقية. انسخ الأرقام في الإعدادات وأرسلها لي");return;}
+    bms={v:dv.getUint32(p,true)/1000, a:dv.getInt32(p+8,true)/1000, t:dv.getInt16(p+12,true)/10,
+         soc:soc, rem:dv.getUint32(p+24,true)/1000, cap:dv.getUint32(p+28,true)/1000, n:n, diff:mx-mn};
+    if(startAh===null)startAh=bms.rem;
+    $("btmsg").textContent="";
+    render();
+  }
+
+  /* ---------- GPS ---------- */
+  function hav(a,b){var R=6371000,r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;
+    var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)*Math.sin(dn/2);
+    return 2*R*Math.asin(Math.sqrt(x));}
+  function onPos(p){
+    var c=p.coords,t=p.timestamp,acc=c.accuracy;
+    $("gps").textContent="دقة الـGPS: "+Math.round(acc)+" متر";
+    if(acc>40)return;
+    var cur={lat:c.latitude,lon:c.longitude,t:t}, v=c.speed;
+    if(st.last){
+      var d=hav(st.last,cur),dt=(t-st.last.t)/1000;
+      if(v==null&&dt>0)v=d/dt;
+      if(d>Math.max(3,acc*0.25)&&(v||0)>0.7){st.dist+=d/1000;st.secs+=dt;path.push([cur.lat,cur.lon]);}
+    }
+    if(!path.length)path.push([cur.lat,cur.lon]); st.last=cur; var k=(v||0)*3.6; st.speed=k<2?0:k; render(); drawMap();
+  }
+  function onErr(e){$("gps").textContent=e.code===1?"الـGPS مرفوض. افتح رابط الصفحة (https) في Chrome واسمح بالموقع، وفعّل الموقع في إعدادات الهاتف":"تعذّر تحديد الموقع، تأكد من تشغيل الـGPS";}
+  $("go").onclick=function(){
+    if(st.watch!==null){navigator.geolocation.clearWatch(st.watch);st.watch=null;st.speed=0;$("go").textContent="ابدأ الرحلة";$("gps").textContent="الـGPS متوقف";render();return;}
+    if(!window.isSecureContext){$("gps").textContent="الصفحة مفتوحة كملف محلي والـGPS لا يعمل هنا. جرّب فتح الملف بعنوان file:// في Chrome أو من استضافة https";return;}
+    if(!navigator.geolocation){$("gps").textContent="هذا المتصفح لا يدعم الـGPS";return;}
+    st.last=null;$("gps").textContent="جارٍ تحديد الموقع…";
+    st.watch=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+    $("go").textContent="إيقاف الرحلة";
+    try{if(navigator.wakeLock)navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
+  };
+  $("reset").onclick=function(){st.dist=0;st.secs=0;st.last=null;path.length=0;startAh=bms?bms.rem:null;render();drawMap();};
+  $("bt").onclick=connectBms;
+
+  /* ---------- Render ---------- */
+  function render(){
+    $("spd").textContent=Math.round(st.speed);
+    $("dist").textContent=st.dist.toFixed(2);
+    var n=bms&&bms.n?bms.n:16;
+    while(cellsEl.children.length<n)cellsEl.appendChild(document.createElement("i"));
+    while(cellsEl.children.length>n)cellsEl.removeChild(cellsEl.lastChild);
+    if(!bms){$("pct").textContent="--%";return;}
+    var soc=bms.soc, col=soc<=15?"var(--low)":soc<=35?"var(--warn)":"var(--ok)", on=Math.ceil(soc/100*n);
+    for(var i=0;i<n;i++){cellsEl.children[i].className=i<on?"on":"";cellsEl.children[i].style.setProperty("--c",col);}
+    $("pct").textContent=soc+"%"; $("pct").style.color=col;
+    $("volt").textContent=bms.v.toFixed(2)+" فولت";
+    $("amp").textContent=bms.a.toFixed(1)+" أمبير";
+    var pw=bms.v*bms.a; $("pw").textContent=Math.round(Math.abs(pw));
+    $("sub").textContent="المتبقي "+bms.rem.toFixed(1)+" من "+bms.cap.toFixed(0)+" أمبير ساعة · فرق الخلايا "+(bms.diff*1000).toFixed(0)+" مللي فولت · حرارة "+bms.t.toFixed(0)+"°";
+    var est=parseFloat($("est").value)||18, whkm=est, usedAh=startAh!==null?startAh-bms.rem:0;
+    if(st.dist>=0.5&&usedAh>0.05)whkm=usedAh*bms.v/st.dist;
+    $("whkm").textContent=Math.round(whkm);
+    $("rem").textContent=(bms.rem*bms.v/whkm).toFixed(1);
+  }
+
+  /* ---------- Route trace ---------- */
+  function drawMap(){
+    var cv=$("map"),w=cv.clientWidth,h=cv.clientHeight,dpr=window.devicePixelRatio||1;
+    if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;
+    var g=cv.getContext("2d");g.scale(dpr,dpr);
+    var cs=getComputedStyle(document.documentElement),ink=cs.getPropertyValue("--ink"),mute=cs.getPropertyValue("--mute"),ok=cs.getPropertyValue("--ok"),card=cs.getPropertyValue("--card");
+    g.font="13px 'Readex Pro',sans-serif";g.textAlign="center";
+    if(path.length<2){g.fillStyle=mute;g.fillText("يظهر مسار الرحلة هنا بعد بدء الحركة",w/2,h/2);return;}
+    var k=Math.cos(path[0][0]*Math.PI/180),x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+    var P=path.map(function(p){var x=p[1]*111320*k,y=p[0]*110540;x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);return[x,y];});
+    var sx=Math.max(x1-x0,80),sy=Math.max(y1-y0,80),s=Math.min((w-48)/sx,(h-64)/sy),cx=(x0+x1)/2,cy=(y0+y1)/2;
+    function X(p){return w/2+(p[0]-cx)*s;}
+    function Y(p){return h/2-(p[1]-cy)*s-8;}
+    g.strokeStyle=ok;g.lineWidth=4;g.lineJoin="round";g.lineCap="round";g.beginPath();
+    P.forEach(function(p,i){if(i)g.lineTo(X(p),Y(p));else g.moveTo(X(p),Y(p));});g.stroke();
+    var a=P[0],z=P[P.length-1];
+    g.lineWidth=3;g.strokeStyle=ink;g.fillStyle=card;g.beginPath();g.arc(X(a),Y(a),6,0,7);g.fill();g.stroke();
+    g.fillStyle=ok;g.beginPath();g.arc(X(z),Y(z),8,0,7);g.fill();g.stroke();
+    var L=[10,20,50,100,200,500,1000,2000,5000,10000],m=L[0];
+    L.forEach(function(v){if(v*s<=w*0.3)m=v;});
+    g.strokeStyle=ink;g.lineWidth=2;g.beginPath();g.moveTo(14,h-14);g.lineTo(14+m*s,h-14);g.stroke();
+    g.fillStyle=mute;g.textAlign="left";g.fillText(m>=1000?(m/1000)+" كم":m+" م",14,h-20);
+    g.textAlign="right";g.fillText("↑ شمال",w-12,20);
+  }
+
+  /* ---------- Demo ---------- */
+  $("demo").onclick=function(){
+    if(st.demo){clearInterval(st.demo);st.demo=null;st.speed=0;bms=null;startAh=null;$("demo").textContent="تشغيل وضع التجربة";render();return;}
+    $("demo").textContent="إيقاف وضع التجربة";
+    var k=0; bms={v:53.5,a:-10,t:21,soc:93,rem:18.6,cap:20,n:16,diff:0.003}; startAh=18.6;
+    st.demo=setInterval(function(){
+      k++; st.speed=Math.max(0,24+8*Math.sin(k/6)); var dkm=st.speed/3600; st.dist+=dkm;
+      bms.rem=Math.max(0,bms.rem-dkm*18/bms.v*40); bms.soc=Math.round(bms.rem/bms.cap*100);
+      bms.a=-(st.speed*18/bms.v); render();
+    },1000);
+  };
+  render();drawMap();
+  window.addEventListener("resize",drawMap);
+})();
+</script>
+</body>
+</html>
