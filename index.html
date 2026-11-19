@@ -2,221 +2,314 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16211c">
 <title>عدّاد البسكليت</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e9ede4;--ink:#16211c;--mute:#5d6b63;--line:#c3ccbe;--card:#f6f8f2;--ok:#0b6e4f;--warn:#b45309;--low:#b91c1c;--off:#d3dacd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1512;--ink:#e8efe9;--mute:#93a39a;--line:#26322b;--card:#17201b;--ok:#5bd6a0;--warn:#f0a35a;--low:#ff7a7a;--off:#26322b}}
-:root[data-theme="dark"]{--bg:#0f1512;--ink:#e8efe9;--mute:#93a39a;--line:#26322b;--card:#17201b;--ok:#5bd6a0;--warn:#f0a35a;--low:#ff7a7a;--off:#26322b}
+:root{--bg:#e9ede4;--ink:#16211c;--mute:#5d6b63;--line:#c3ccbe;--card:#f6f8f2;--ok:#0b6e4f;--warn:#b45309;--low:#b91c1c;--blue:#1d6fb8;--off:#d3dacd}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1512;--ink:#e8efe9;--mute:#93a39a;--line:#26322b;--card:#17201b;--ok:#5bd6a0;--warn:#f0a35a;--low:#ff7a7a;--blue:#6db3ff;--off:#26322b}}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,"Segoe UI",Tahoma,sans-serif}
-main{max-width:480px;margin:0 auto;padding:16px}
-.speed{text-align:center;padding:14px 0 4px}
-.speed b{display:block;font-size:min(34vw,168px);line-height:1;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,Tahoma,sans-serif}
+body{padding-top:env(safe-area-inset-top,0px)}
+main{max-width:520px;margin:0 auto;padding:12px 16px 90px}
+.tab{display:none}.tab.on{display:block}
+#alert{position:sticky;top:0;z-index:1000;background:var(--low);color:#fff;text-align:center;padding:10px;font-weight:500}
+#alert[hidden]{display:none}
+.msg{font-size:13px;color:var(--mute);text-align:center;min-height:18px;margin:4px 0}
+.speed{text-align:center;padding:6px 0}
+.speed b{display:block;font-size:min(32vw,160px);line-height:1;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .speed span{color:var(--mute);font-size:18px}
-.msg{font-size:13px;color:var(--mute);text-align:center;min-height:20px;margin:2px 0}
-.bat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.bat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .pct{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums}
-.volt{color:var(--mute);font-size:15px;font-variant-numeric:tabular-nums;text-align:left}
-.cells{display:flex;gap:3px;margin-top:10px;direction:ltr}
-.cells i{flex:1;height:26px;border-radius:3px;background:var(--off)}
-.cells i.on{background:var(--c,var(--ok))}
-.sub{margin-top:8px;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.volt{color:var(--mute);font-size:15px;text-align:left;font-variant-numeric:tabular-nums}
+#seg{display:flex;gap:3px;margin-top:10px;direction:ltr}
+#seg i{flex:1;height:24px;border-radius:3px;background:var(--off)}
+#seg i.on{background:var(--c,var(--ok))}
+.sub{margin-top:8px;font-size:13px;color:var(--mute);line-height:1.7}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{border-top:2px solid var(--ink);padding-top:8px}
+.stat{border-top:2px solid var(--ink);padding-top:6px}
 .stat small{display:block;color:var(--mute);font-size:13px}
-.stat b{font-size:34px;font-weight:500;font-variant-numeric:tabular-nums}
-.stat u{text-decoration:none;color:var(--mute);font-size:14px;margin-inline-start:4px}
+.stat b{font-size:30px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat u{text-decoration:none;color:var(--mute);font-size:13px;margin-inline-start:4px}
 .btns{display:flex;gap:10px;margin:14px 0 0}
 button{flex:1;font:inherit;font-size:16px;padding:13px 6px;border-radius:12px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
 button.alt{background:transparent;color:var(--ink)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
-details{border-top:1px solid var(--line);padding-top:10px;margin-top:16px}
-summary{cursor:pointer;color:var(--mute)}
-label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mute)}
-input{width:100%;font:inherit;font-size:17px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-.note{font-size:13px;color:var(--mute);margin-top:10px;line-height:1.8}
-#map{z-index:0;width:100%;height:320px;display:block;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-top:14px}
+#map{z-index:0;width:100%;height:60vh;min-height:300px;border:1px solid var(--line);border-radius:14px}
+.cr{display:flex;align-items:center;gap:8px;margin:5px 0;direction:ltr;font-variant-numeric:tabular-nums}
+.cr span{width:22px;color:var(--mute);font-size:13px}.cr b{width:58px;font-weight:500;font-size:14px}
+.cr div{flex:1;background:var(--off);border-radius:4px;height:16px}.cr i{display:block;height:16px;border-radius:4px}
+label{display:block;margin:10px 0 4px;font-size:14px;color:var(--mute)}
+input{width:100%;font:inherit;font-size:16px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+.trip h4{margin:0 0 6px;font-weight:500;font-size:15px}
+.trip p{margin:0 0 8px;color:var(--mute);font-size:13px;line-height:1.8}
+.trip .btns{margin:0}.trip button{padding:9px 4px;font-size:14px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:1001}
+nav button{background:none;color:var(--mute);border:0;border-radius:0;padding:14px 4px;font-size:14px}
+nav button.on{color:var(--ink);font-weight:700;box-shadow:inset 0 3px 0 var(--ok)}
+details{margin-top:14px;border-top:1px solid var(--line);padding-top:8px}summary{cursor:pointer;color:var(--mute)}
+pre{direction:ltr;white-space:pre-wrap;word-break:break-all;font-size:11px;color:var(--mute);user-select:all}
+@media (orientation:landscape) and (max-height:520px){.dash{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}.speed b{font-size:34vh}}
 </style>
 </head>
 <body>
+<div id="alert" hidden></div>
 <main>
+<div class="msg" id="gps">الـGPS متوقف</div>
+
+<section class="tab on" id="t-dash">
+ <div class="dash">
   <div class="speed"><b id="spd">0</b><span>كم/س</span></div>
-  <div class="msg" id="gps">الـGPS متوقف</div>
-
-  <section class="bat" aria-label="حالة البطارية">
+  <div>
+   <div class="bat">
     <div class="row"><span class="pct" id="pct">--%</span><span class="volt"><span id="volt">-- فولت</span><br><span id="amp">-- أمبير</span></span></div>
-    <div class="cells" id="cells"></div>
+    <div id="seg"></div>
     <div class="sub" id="sub">غير متصل بالـBMS</div>
-  </section>
-
-  <section class="stats">
+   </div>
+   <div class="stats">
     <div class="stat"><small>المتبقي تقريباً</small><b id="rem">--</b><u>كم</u></div>
-    <div class="stat"><small>المسافة المقطوعة</small><b id="dist">0.00</b><u>كم</u></div>
+    <div class="stat"><small>المسافة</small><b id="dist">0.00</b><u>كم</u></div>
     <div class="stat"><small>الاستهلاك</small><b id="whkm">--</b><u>واط/كم</u></div>
-    <div class="stat"><small>الاستطاعة الآن</small><b id="pw">--</b><u>واط</u></div>
-  </section>
-
-  <div class="btns">
-    <button id="bt">اتصال بالـBMS</button>
-    <button id="go">ابدأ الرحلة</button>
-    <button class="alt" id="reset">تصفير</button>
+    <div class="stat"><small>الاستطاعة</small><b id="pw">--</b><u>واط</u></div>
+    <div class="stat"><small>متوسط السرعة</small><b id="avg">0</b><u>كم/س</u></div>
+    <div class="stat"><small>أعلى سرعة</small><b id="max">0</b><u>كم/س</u></div>
+   </div>
   </div>
-  <div class="msg" id="btmsg"></div>
-  <div id="map" aria-label="الخريطة"></div>
-  <button class="alt" id="fol" style="margin-top:8px;width:100%">العودة إلى موقعي</button>
+ </div>
+ <div class="btns"><button id="bt">اتصال بالـBMS</button><button id="trip">ابدأ الرحلة</button></div>
+ <div class="msg" id="btmsg"></div>
+</section>
 
-  <details>
-    <summary>إعدادات</summary>
-    <label for="est">استهلاك تقديري قبل أول كيلومتر (واط/كم)</label>
-    <input id="est" type="number" inputmode="decimal" value="18">
-    <p class="note">أغلق تطبيق JK BMS قبل الاتصال، فالـBMS يقبل اتصالاً واحداً فقط. إذا ظهرت قراءات غير منطقية أخبرني باسم موديل الـBMS لأعدّل القراءة.</p>
-    <pre id="dump" style="direction:ltr;white-space:pre-wrap;word-break:break-all;font-size:11px;color:var(--mute);user-select:all"></pre>
-    <button class="alt" id="demo" style="margin-top:6px;width:100%">تشغيل وضع التجربة</button>
-  </details>
+<section class="tab" id="t-map">
+ <div id="map"></div>
+ <div class="btns"><button id="loc">موقعي المباشر</button></div>
+ <p class="sub">اللون يتدرج من الأخضر (بطيء) إلى الأحمر (سريع). الدائرة المتقطعة هي المدى المتبقي تقريباً.</p>
+</section>
+
+<section class="tab" id="t-cells">
+ <div id="cl"><p class="sub">اتصل بالـBMS لعرض الخلايا.</p></div>
+ <p class="sub" id="ci"></p>
+ <details open><summary>حدود التنبيه والإعدادات</summary>
+  <div class="g2">
+   <div><label for="c-soc">تنبيه النسبة أقل من %</label><input id="c-soc" type="number" inputmode="decimal"></div>
+   <div><label for="c-temp">الحرارة أعلى من °</label><input id="c-temp" type="number" inputmode="decimal"></div>
+   <div><label for="c-delta">فرق الخلايا (مللي فولت)</label><input id="c-delta" type="number" inputmode="decimal"></div>
+   <div><label for="c-amp">التيار أعلى من (أمبير)</label><input id="c-amp" type="number" inputmode="decimal"></div>
+  </div>
+  <label for="c-est">استهلاك تقديري قبل أول 0.5 كم (واط/كم)</label><input id="c-est" type="number" inputmode="decimal">
+ </details>
+ <pre id="dump"></pre>
+</section>
+
+<section class="tab" id="t-trips"><div id="tl"></div></section>
 </main>
+<nav>
+ <button class="on" data-t="dash">اللوحة</button><button data-t="map">الخريطة</button><button data-t="cells">الخلايا</button><button data-t="trips">الرحلات</button>
+</nav>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 (function(){
-  var $=function(i){return document.getElementById(i)};
-  var SVC=0xffe0, CHR=0xffe1;
-  var bms=null, ch=null, buf=[], lastRx=0, startAh=null, watchdog=null, path=[];
-  var st={dist:0,secs:0,speed:0,last:null,watch:null,demo:null};
-  try{var s=localStorage.getItem("est");if(s)$("est").value=s;}catch(e){}
-  $("est").oninput=function(){try{localStorage.setItem("est",$("est").value)}catch(e){}render();};
+var $=function(i){return document.getElementById(i)};
+function ls(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+var cfg=ls("cfg",{est:18,soc:20,temp:45,delta:100,amp:50}),trips=ls("trips",[]);
+var bms=null,ch=null,buf=[],lastRx=0,wd=null,startAh=null,startSoc=null,hist=[],path=[],alerts="",ac=null;
+var st={rec:0,dist:0,secs:0,speed:0,max:0,last:null,prev:null,watch:null,t0:0};
+var map=null,route=null,me=null,rangeC=null,follow=true,fixed=false;
+var SVC=0xffe0,CHR=0xffe1;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
 
-  var cellsEl=$("cells");
-  function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+/* tabs */
+function show(t){
+  document.querySelectorAll(".tab").forEach(function(e){e.classList.toggle("on",e.id==="t-"+t)});
+  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});
+  if(t==="map"&&map)setTimeout(function(){map.invalidateSize()},60);
+}
+document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){show(b.dataset.t)}});
 
-  /* ---------- JK BMS over Bluetooth ---------- */
-  function cmd(c){var f=new Uint8Array(20);f[0]=0xAA;f[1]=0x55;f[2]=0x90;f[3]=0xEB;f[4]=c;var s=0;for(var i=0;i<19;i++)s+=f[i];f[19]=s&255;return f;}
-  async function send(c){var f=cmd(c);try{await ch.writeValueWithoutResponse(f)}catch(e){await ch.writeValue(f)}}
+/* settings */
+[["soc","c-soc"],["temp","c-temp"],["delta","c-delta"],["amp","c-amp"],["est","c-est"]].forEach(function(x){
+  $(x[1]).value=cfg[x[0]];
+  $(x[1]).oninput=function(){var v=parseFloat(this.value);if(!isNaN(v)){cfg[x[0]]=v;sv("cfg",cfg);render();}};
+});
 
-  async function connectBms(){
-    if(!navigator.bluetooth){$("btmsg").textContent="هذا المتصفح لا يدعم البلوتوث. افتح الرابط في Chrome على أندرويد.";return;}
-    try{
-      var d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[SVC]});
-      d.addEventListener("gattserverdisconnected",function(){clearInterval(watchdog);$("bt").textContent="اتصال بالـBMS";$("btmsg").textContent="انقطع الاتصال بالـBMS";});
-      $("btmsg").textContent="جارٍ الاتصال…";
-      var srv=await d.gatt.connect(), sv=await srv.getPrimaryService(SVC);
-      ch=await sv.getCharacteristic(CHR);
-      await ch.startNotifications();
-      ch.addEventListener("characteristicvaluechanged",onRx);
-      await send(0x97); await sleep(400); await send(0x96);
-      lastRx=Date.now();
-      watchdog=setInterval(function(){if(Date.now()-lastRx>4000){lastRx=Date.now();send(0x96).catch(function(){});}},1000);
-      $("bt").textContent="متصل ✓"; $("btmsg").textContent="بانتظار أول قراءة…";
-    }catch(e){$("btmsg").textContent=(e&&e.name==="NotFoundError")?"لم يتم اختيار جهاز":(/permissions policy/i.test((e&&e.message)||"")?"البلوتوث غير مسموح داخل الصفحة المستضافة. افتح النسخة المحمّلة من الملف":"تعذّر الاتصال: "+(e&&e.message||e));}
-  }
-  function onRx(e){
-    var v=e.target.value, d=new Uint8Array(v.buffer,v.byteOffset,v.byteLength);
-    lastRx=Date.now();
-    if(d.length>=4&&d[0]===0x55&&d[1]===0xAA&&d[2]===0xEB&&d[3]===0x90)buf=[];
-    for(var i=0;i<d.length;i++)buf.push(d[i]);
-    if(buf.length>=300){ if(buf[4]===2)parse(buf.slice(0,300)); buf=[]; }
-  }
-  function parse(b){
-    function dump(m){$("btmsg").textContent=m;var h=[];for(var j=0;j<b.length;j++)h.push(("0"+b[j].toString(16)).slice(-2));$("dump").textContent=h.join(" ");document.querySelector("details").open=true;}
-    var dv=new DataView(new Uint8Array(b).buffer), n=0, sum=0, mn=9, mx=0, p=-1;
-    for(var i=0;i<32;i++){var c=dv.getUint16(6+2*i,true)/1000; if(c<1.5||c>5)break; n++;sum+=c;mn=Math.min(mn,c);mx=Math.max(mx,c);}
-    for(var q=100;q<b.length-36&&p<0;q++){var t=dv.getUint32(q,true)/1000; if(n&&Math.abs(t-sum)<sum*0.03)p=q;}
-    if(p<0){dump("تعذّر فهم إطار البيانات. انسخ الأرقام في الإعدادات وأرسلها لي");return;}
-    var soc=b[p+23];
-    if(soc>100){dump("قراءة النسبة غير منطقية. انسخ الأرقام في الإعدادات وأرسلها لي");return;}
-    bms={v:dv.getUint32(p,true)/1000, a:dv.getInt32(p+8,true)/1000, t:dv.getInt16(p+12,true)/10,
-         soc:soc, rem:dv.getUint32(p+24,true)/1000, cap:dv.getUint32(p+28,true)/1000, n:n, diff:mx-mn};
-    if(startAh===null)startAh=bms.rem;
-    $("btmsg").textContent="";
-    render();
-  }
+/* BLE */
+function cmd(c){var f=new Uint8Array(20),s=0;f[0]=0xAA;f[1]=0x55;f[2]=0x90;f[3]=0xEB;f[4]=c;for(var i=0;i<19;i++)s+=f[i];f[19]=s&255;return f;}
+async function send(c){var f=cmd(c);try{await ch.writeValueWithoutResponse(f)}catch(e){await ch.writeValue(f)}}
+async function connectBms(){
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(!navigator.bluetooth){$("btmsg").textContent="هذا المتصفح لا يدعم البلوتوث. استخدم Chrome على أندرويد.";return;}
+  try{
+    var d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[SVC]});
+    d.addEventListener("gattserverdisconnected",function(){clearInterval(wd);$("bt").textContent="اتصال بالـBMS";$("btmsg").textContent="انقطع الاتصال بالـBMS";});
+    $("btmsg").textContent="جارٍ الاتصال…";
+    var srv=await d.gatt.connect(),sv2=await srv.getPrimaryService(SVC);
+    ch=await sv2.getCharacteristic(CHR);
+    await ch.startNotifications();ch.addEventListener("characteristicvaluechanged",onRx);
+    await send(0x97);await sleep(400);await send(0x96);lastRx=Date.now();
+    wd=setInterval(function(){if(Date.now()-lastRx>4000){lastRx=Date.now();send(0x96).catch(function(){});}},1000);
+    $("bt").textContent="متصل ✓";$("btmsg").textContent="بانتظار أول قراءة…";
+  }catch(e){$("btmsg").textContent=(e&&e.name==="NotFoundError")?"لم يتم اختيار جهاز":"تعذّر الاتصال: "+((e&&e.message)||e);}
+}
+function onRx(e){
+  var v=e.target.value,d=new Uint8Array(v.buffer,v.byteOffset,v.byteLength);lastRx=Date.now();
+  if(d.length>=4&&d[0]===0x55&&d[1]===0xAA&&d[2]===0xEB&&d[3]===0x90)buf=[];
+  for(var i=0;i<d.length;i++)buf.push(d[i]);
+  if(buf.length>=300){if(buf[4]===2)parse(buf.slice(0,300));buf=[];}
+}
+function parse(b){
+  function dump(m){$("btmsg").textContent=m;var h=[];for(var j=0;j<b.length;j++)h.push(("0"+b[j].toString(16)).slice(-2));$("dump").textContent=h.join(" ");}
+  var dv=new DataView(new Uint8Array(b).buffer),cells=[],sum=0,p=-1;
+  for(var i=0;i<32;i++){var c=dv.getUint16(6+2*i,true)/1000;if(c<1.5||c>5)break;cells.push(c);sum+=c;}
+  for(var q=100;q<b.length-40&&p<0;q++){var t=dv.getUint32(q,true)/1000;if(cells.length&&Math.abs(t-sum)<sum*0.03)p=q;}
+  if(p<0){dump("تعذّر فهم إطار البيانات. انسخ الأرقام من تبويب الخلايا وأرسلها لي");return;}
+  var soc=b[p+23];if(soc>100){dump("قراءة النسبة غير منطقية");return;}
+  var mn=Math.min.apply(0,cells),mx=Math.max.apply(0,cells),cy=dv.getUint32(p+32,true);
+  bms={v:dv.getUint32(p,true)/1000,a:dv.getInt32(p+8,true)/1000,t:dv.getInt16(p+12,true)/10,t2:dv.getInt16(p+14,true)/10,soc:soc,
+    rem:dv.getUint32(p+24,true)/1000,cap:dv.getUint32(p+28,true)/1000,n:cells.length,cells:cells,diff:mx-mn,cyc:cy<100000?cy:null};
+  if(startAh===null){startAh=bms.rem;startSoc=bms.soc;}
+  if(st.rec)hist.push({d:st.dist,ah:bms.rem});
+  $("btmsg").textContent="";checkAlerts();render();renderCells();
+}
 
-  /* ---------- GPS ---------- */
-  function hav(a,b){var R=6371000,r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;
-    var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)*Math.sin(dn/2);
-    return 2*R*Math.asin(Math.sqrt(x));}
-  function onPos(p){
-    var c=p.coords,t=p.timestamp,acc=c.accuracy;
-    $("gps").textContent="دقة الـGPS: "+Math.round(acc)+" متر";
-    if(acc>40)return;
-    var cur={lat:c.latitude,lon:c.longitude,t:t}, v=c.speed;
-    if(st.last){
-      var d=hav(st.last,cur),dt=(t-st.last.t)/1000;
-      if(v==null&&dt>0)v=d/dt;
-      if(d>Math.max(3,acc*0.25)&&(v||0)>0.7){st.dist+=d/1000;st.secs+=dt;path.push([cur.lat,cur.lon]);}
+/* alerts */
+function beep(){try{var o=ac.createOscillator();o.connect(ac.destination);o.frequency.value=880;o.start();o.stop(ac.currentTime+.4);}catch(e){}}
+function checkAlerts(){
+  var a=[];
+  if(bms.soc<=cfg.soc)a.push("البطارية منخفضة "+bms.soc+"%");
+  if(Math.max(bms.t,bms.t2)>=cfg.temp)a.push("حرارة مرتفعة");
+  if(bms.diff*1000>=cfg.delta)a.push("اختلال الخلايا");
+  if(Math.abs(bms.a)>=cfg.amp)a.push("تيار مرتفع");
+  var k=a.join("|"),el=$("alert");el.hidden=!a.length;el.textContent=a.join(" · ");
+  if(k&&k!==alerts){try{navigator.vibrate&&navigator.vibrate([300,150,300]);}catch(e){}beep();}
+  alerts=k;
+}
+
+/* GPS */
+function hav(a,b){var R=6371000,r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;
+  var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)*Math.sin(dn/2);return 2*R*Math.asin(Math.sqrt(x));}
+function col(k){return "hsl("+Math.round(140-Math.min(k,40)/40*140)+",75%,42%)";}
+function seg(a,b,k){if(map&&route)L.polyline([a,b],{color:col(k),weight:6}).addTo(route);}
+function startGps(){
+  if(st.watch!==null)return;
+  if(!window.isSecureContext||!navigator.geolocation){$("gps").textContent="الـGPS يحتاج فتح الصفحة عبر رابط https";return;}
+  $("gps").textContent="جارٍ تحديد الموقع…";
+  st.watch=navigator.geolocation.watchPosition(onPos,function(e){st.watch=null;$("gps").textContent=e.code===1?"الـGPS مرفوض: اسمح بالموقع للمتصفح وفعّله في إعدادات الهاتف":"تعذّر تحديد الموقع";},{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+}
+function onPos(p){
+  var c=p.coords,acc=c.accuracy;$("gps").textContent="دقة الـGPS: "+Math.round(acc)+" م";
+  if(acc>40)return;
+  var cur={lat:c.latitude,lon:c.longitude,t:p.timestamp},v=c.speed;
+  if(v==null&&st.prev){var dt0=(cur.t-st.prev.t)/1000;if(dt0>0)v=hav(st.prev,cur)/dt0;}
+  st.prev=cur;
+  if(st.rec){
+    if(!st.last){st.last=cur;path.push([cur.lat,cur.lon,0]);if(map&&route)L.circleMarker([cur.lat,cur.lon],{radius:7,color:"#16211c",weight:3,fillColor:"#fff",fillOpacity:1}).addTo(route);}
+    else{
+      var d=hav(st.last,cur);
+      if(d>Math.max(3,acc*0.25)&&(v||0)>0.7){
+        var k=v*3.6;st.dist+=d/1000;st.secs+=(cur.t-st.last.t)/1000;st.max=Math.max(st.max,k);
+        path.push([cur.lat,cur.lon,k]);seg([st.last.lat,st.last.lon],[cur.lat,cur.lon],k);st.last=cur;
+      }
     }
-    if(!path.length)path.push([cur.lat,cur.lon]); st.last=cur; var k=(v||0)*3.6; st.speed=k<2?0:k; render(); drawMap();
   }
-  function onErr(e){$("gps").textContent=e.code===1?"الـGPS مرفوض. افتح رابط الصفحة (https) في Chrome واسمح بالموقع، وفعّل الموقع في إعدادات الهاتف":"تعذّر تحديد الموقع، تأكد من تشغيل الـGPS";}
-  $("go").onclick=function(){
-    if(st.watch!==null){navigator.geolocation.clearWatch(st.watch);st.watch=null;st.speed=0;$("go").textContent="ابدأ الرحلة";$("gps").textContent="الـGPS متوقف";render();return;}
-    if(!window.isSecureContext){$("gps").textContent="الصفحة مفتوحة كملف محلي والـGPS لا يعمل هنا. جرّب فتح الملف بعنوان file:// في Chrome أو من استضافة https";return;}
-    if(!navigator.geolocation){$("gps").textContent="هذا المتصفح لا يدعم الـGPS";return;}
-    st.last=null;$("gps").textContent="جارٍ تحديد الموقع…";
-    st.watch=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
-    $("go").textContent="إيقاف الرحلة";
-    try{if(navigator.wakeLock)navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
-  };
-  $("reset").onclick=function(){st.dist=0;st.secs=0;st.last=null;path.length=0;startAh=bms?bms.rem:null;render();drawMap();};
-  $("bt").onclick=connectBms;
+  var s=(v||0)*3.6;st.speed=s<2?0:s;
+  setMe([cur.lat,cur.lon]);render();
+}
+function setMe(ll){
+  if(!map)return;
+  if(!me)me=L.circleMarker(ll,{radius:9,color:"#fff",weight:3,fillColor:"#1d6fb8",fillOpacity:1}).addTo(map);else me.setLatLng(ll);
+  if(!rangeC)rangeC=L.circle(ll,{radius:0,color:"#0b6e4f",weight:1,dashArray:"6",fillOpacity:.04}).addTo(map);else rangeC.setLatLng(ll);
+  if(!fixed){map.setView(ll,16);fixed=true;}else if(follow)map.panTo(ll);
+}
+function initMap(){
+  if(!window.L){$("map").textContent="تعذّر تحميل الخريطة، تحقق من الإنترنت";return;}
+  map=L.map("map").setView([20,30],3);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
+  route=L.layerGroup().addTo(map);map.on("dragstart",function(){follow=false;});
+}
+$("loc").onclick=function(){follow=true;fixed=false;startGps();if(me){map.setView(me.getLatLng(),Math.max(map.getZoom(),16));fixed=true;}};
 
-  /* ---------- Render ---------- */
-  function render(){
-    $("spd").textContent=Math.round(st.speed);
-    $("dist").textContent=st.dist.toFixed(2);
-    var n=bms&&bms.n?bms.n:16;
-    while(cellsEl.children.length<n)cellsEl.appendChild(document.createElement("i"));
-    while(cellsEl.children.length>n)cellsEl.removeChild(cellsEl.lastChild);
-    if(!bms){$("pct").textContent="--%";return;}
-    var soc=bms.soc, col=soc<=15?"var(--low)":soc<=35?"var(--warn)":"var(--ok)", on=Math.ceil(soc/100*n);
-    for(var i=0;i<n;i++){cellsEl.children[i].className=i<on?"on":"";cellsEl.children[i].style.setProperty("--c",col);}
-    $("pct").textContent=soc+"%"; $("pct").style.color=col;
-    $("volt").textContent=bms.v.toFixed(2)+" فولت";
-    $("amp").textContent=bms.a.toFixed(1)+" أمبير";
-    var pw=bms.v*bms.a; $("pw").textContent=Math.round(Math.abs(pw));
-    $("sub").textContent="المتبقي "+bms.rem.toFixed(1)+" من "+bms.cap.toFixed(0)+" أمبير ساعة · فرق الخلايا "+(bms.diff*1000).toFixed(0)+" مللي فولت · حرارة "+bms.t.toFixed(0)+"°";
-    var est=parseFloat($("est").value)||18, whkm=est, usedAh=startAh!==null?startAh-bms.rem:0;
-    if(st.dist>=0.5&&usedAh>0.05)whkm=usedAh*bms.v/st.dist;
-    $("whkm").textContent=Math.round(whkm);
-    $("rem").textContent=(bms.rem*bms.v/whkm).toFixed(1);
+/* trips */
+function startTrip(){
+  st.rec=1;st.dist=0;st.secs=0;st.max=0;st.last=null;st.t0=Date.now();path=[];hist=[];
+  startAh=bms?bms.rem:null;startSoc=bms?bms.soc:null;if(route)route.clearLayers();
+  follow=true;startGps();$("trip").textContent="إنهاء وحفظ";
+  try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(function(){});}catch(e){}
+}
+function endTrip(){
+  st.rec=0;$("trip").textContent="ابدأ الرحلة";
+  if(st.dist>=0.05){
+    trips.unshift({id:Date.now(),t:st.t0,dist:st.dist,secs:st.secs,max:st.max,wh:(bms&&startAh!==null)?Math.max(0,(startAh-bms.rem)*bms.v):0,s0:startSoc,s1:bms?bms.soc:null,
+      p:path.map(function(q){return[+q[0].toFixed(5),+q[1].toFixed(5),Math.round(q[2])];})});
+    trips=trips.slice(0,50);sv("trips",trips);renderTrips();$("btmsg").textContent="تم حفظ الرحلة في تبويب الرحلات";
   }
+}
+$("trip").onclick=function(){if(st.rec)endTrip();else startTrip();};
+function renderTrips(){
+  if(!trips.length){$("tl").innerHTML='<p class="sub">لا توجد رحلات محفوظة بعد.</p>';return;}
+  $("tl").innerHTML=trips.map(function(t,i){
+    var avg=t.secs>0?Math.round(t.dist/(t.secs/3600)):0,wk=t.dist>0&&t.wh?Math.round(t.wh/t.dist):"--";
+    return '<div class="trip"><h4>'+new Date(t.t).toLocaleString("ar")+'</h4><p>'+t.dist.toFixed(2)+' كم · '+Math.round(t.secs/60)+' دقيقة حركة · متوسط '+avg+' · أعلى '+Math.round(t.max)+' كم/س<br>استهلاك '+wk+' واط/كم'+(t.s0!=null&&t.s1!=null?' · البطارية '+t.s0+'% ← '+t.s1+'%':'')+'</p><div class="btns"><button data-a="v" data-i="'+i+'">عرض على الخريطة</button><button class="alt" data-a="g" data-i="'+i+'">GPX</button><button class="alt" data-a="d" data-i="'+i+'">حذف</button></div></div>';
+  }).join("");
+}
+$("tl").onclick=function(e){
+  var b=e.target.closest("button");if(!b)return;var i=+b.dataset.i,t=trips[i];if(!t)return;
+  if(b.dataset.a==="d"){if(confirm("حذف هذه الرحلة؟")){trips.splice(i,1);sv("trips",trips);renderTrips();}}
+  else if(b.dataset.a==="g"){
+    var s='<?xml version="1.0"?><gpx version="1.1" creator="ebike" xmlns="http://www.topografix.com/GPX/1/1"><trk><trkseg>'+t.p.map(function(q){return '<trkpt lat="'+q[0]+'" lon="'+q[1]+'"/>';}).join("")+'</trkseg></trk></gpx>';
+    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([s],{type:"application/gpx+xml"}));a.download="trip-"+t.id+".gpx";document.body.appendChild(a);a.click();a.remove();
+  }else{
+    if(!map||!route)return;route.clearLayers();follow=false;
+    for(var j=1;j<t.p.length;j++)seg([t.p[j-1][0],t.p[j-1][1]],[t.p[j][0],t.p[j][1]],t.p[j][2]);
+    if(t.p.length){L.circleMarker([t.p[0][0],t.p[0][1]],{radius:7,color:"#16211c",weight:3,fillColor:"#fff",fillOpacity:1}).addTo(route);
+      map.fitBounds(L.latLngBounds(t.p.map(function(q){return[q[0],q[1]];})),{padding:[30,30]});}
+    show("map");
+  }
+};
 
-  /* ---------- Map (Leaflet + OpenStreetMap) ---------- */
-  var map=null,line=null,me=null,follow=true,fixed=false;
-  function initMap(){
-    if(!window.L){$("map").textContent="تعذّر تحميل الخريطة، تحقق من الإنترنت";return;}
-    map=L.map("map").setView([20,30],3);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
-    line=L.polyline([],{color:"#0b6e4f",weight:6,opacity:.9}).addTo(map);
-    map.on("dragstart",function(){follow=false;});
+/* render */
+function whkm(){
+  var e=+cfg.est||18;
+  if(bms&&st.rec&&st.dist>=0.5&&hist.length){
+    var h=hist[0];for(var i=0;i<hist.length;i++){if(hist[i].d>=st.dist-5){h=hist[i];break;}}
+    var dd=st.dist-h.d,u=(h.ah-bms.rem)*bms.v;if(dd>=0.5&&u>0)return u/dd;
   }
-  function drawMap(){
-    if(!map)return;
-    line.setLatLngs(path);
-    var z=path[path.length-1];
-    if(!z){if(me){map.removeLayer(me);me=null;}fixed=false;return;}
-    if(!me)me=L.circleMarker(z,{radius:9,color:"#fff",weight:3,fillColor:"#0b6e4f",fillOpacity:1}).addTo(map);
-    else me.setLatLng(z);
-    if(!fixed){map.setView(z,16);fixed=true;}
-    else if(follow)map.panTo(z);
-  }
-  $("fol").onclick=function(){follow=true;var z=path[path.length-1];if(map&&z)map.setView(z,Math.max(map.getZoom(),16));};
+  return e;
+}
+function render(){
+  $("spd").textContent=Math.round(st.speed);$("dist").textContent=st.dist.toFixed(2);
+  $("avg").textContent=st.secs>0?Math.round(st.dist/(st.secs/3600)):0;$("max").textContent=Math.round(st.max);
+  var n=bms?bms.n:16,sg=$("seg");
+  while(sg.children.length<n)sg.appendChild(document.createElement("i"));while(sg.children.length>n)sg.removeChild(sg.lastChild);
+  if(!bms)return;
+  var soc=bms.soc,c=soc<=15?"var(--low)":soc<=35?"var(--warn)":"var(--ok)",on=Math.ceil(soc/100*n);
+  for(var i=0;i<n;i++){sg.children[i].className=i<on?"on":"";sg.children[i].style.setProperty("--c",c);}
+  $("pct").textContent=soc+"%";$("pct").style.color=c;
+  $("volt").textContent=bms.v.toFixed(2)+" فولت";$("amp").textContent=bms.a.toFixed(1)+" أمبير";
+  var w=whkm(),rk=bms.rem*bms.v/w;
+  $("whkm").textContent=Math.round(w);$("rem").textContent=rk.toFixed(1);$("pw").textContent=Math.round(Math.abs(bms.v*bms.a));
+  $("sub").textContent="المتبقي "+bms.rem.toFixed(1)+" من "+bms.cap.toFixed(0)+" أمبير ساعة";
+  if(rangeC)rangeC.setRadius(rk*1000);
+}
+function renderCells(){
+  var c=bms.cells,mn=Math.min.apply(0,c),mx=Math.max.apply(0,c);
+  $("cl").innerHTML=c.map(function(v,i){
+    var w=Math.round((v-mn+0.02)/(mx-mn+0.04)*100),k=v===mn?"var(--warn)":v===mx?"var(--blue)":"var(--ok)";
+    return '<div class="cr"><span>'+(i+1)+'</span><div><i style="width:'+w+'%;background:'+k+'"></i></div><b>'+v.toFixed(3)+'</b></div>';
+  }).join("");
+  $("ci").textContent="فرق الخلايا "+(bms.diff*1000).toFixed(0)+" مللي فولت · حرارة "+bms.t.toFixed(0)+"° و"+bms.t2.toFixed(0)+"°"+(bms.cyc!=null?" · دورات الشحن "+bms.cyc:"")+" (الأزرق أعلى خلية، والبرتقالي أدنى خلية)";
+}
 
-  /* ---------- Demo ---------- */
-  $("demo").onclick=function(){
-    if(st.demo){clearInterval(st.demo);st.demo=null;st.speed=0;bms=null;startAh=null;$("demo").textContent="تشغيل وضع التجربة";render();return;}
-    $("demo").textContent="إيقاف وضع التجربة";
-    var k=0; bms={v:53.5,a:-10,t:21,soc:93,rem:18.6,cap:20,n:16,diff:0.003}; startAh=18.6;
-    st.demo=setInterval(function(){
-      k++; st.speed=Math.max(0,24+8*Math.sin(k/6)); var dkm=st.speed/3600; st.dist+=dkm;
-      bms.rem=Math.max(0,bms.rem-dkm*18/bms.v*40); bms.soc=Math.round(bms.rem/bms.cap*100);
-      bms.a=-(st.speed*18/bms.v); render();
-    },1000);
-  };
-  initMap();render();drawMap();
-  window.addEventListener("resize",function(){if(map)map.invalidateSize();});
+$("bt").onclick=connectBms;
+initMap();renderTrips();render();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
 })();
 </script>
 </body>
